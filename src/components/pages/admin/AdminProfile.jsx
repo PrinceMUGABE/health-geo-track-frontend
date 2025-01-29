@@ -8,20 +8,19 @@ function AdminProfile() {
   const [userData, setUserData] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    phone_number: '', // Change `phone` to `phone_number`
+    phone_number: '',
     email: '',
     role: ''
   });
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('userData'));
-
     console.log("Retrieved user from localStorage:", storedUser);
 
-    if (storedUser && storedUser.id.toString() === id) { // Ensure type match
+    if (storedUser && storedUser.id.toString() === id) {
       setUserData(storedUser);
       setFormData({
-        phone_number: storedUser.phone, // Change `phone` to `phone_number`
+        phone_number: storedUser.phone,
         email: storedUser.email,
         role: storedUser.role
       });
@@ -36,7 +35,7 @@ function AdminProfile() {
   }, [userData]);
 
   const handleEditClick = () => {
-    setIsEditing(!isEditing); // Toggle editing mode
+    setIsEditing(!isEditing);
   };
 
   const handleChange = (e) => {
@@ -49,18 +48,16 @@ function AdminProfile() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Get the access token from localStorage
     const accessToken = JSON.parse(localStorage.getItem('userData'))?.access_token;
 
     if (!accessToken) {
       console.error('Access token is missing!');
-      return; // Exit the function if no access token is found
+      return;
     }
 
-    // Sending PUT request to update the user data
     const updatedUser = {
       ...userData,
-      phone_number: formData.phone_number, // Send `phone_number` instead of `phone`
+      phone_number: formData.phone_number,
       email: formData.email,
       role: formData.role,
     };
@@ -70,19 +67,17 @@ function AdminProfile() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}` // Include the access token in the Authorization header
+          'Authorization': `Bearer ${accessToken}`
         },
         body: JSON.stringify(updatedUser),
       });
 
       if (response.ok) {
         const updatedData = await response.json();
-        // Update the localStorage with the new data
         localStorage.setItem('userData', JSON.stringify(updatedData));
-        setUserData(updatedData); // Update the state with new user data
-        setIsEditing(false); // Stop editing mode
+        setUserData(updatedData);
+        setIsEditing(false);
         console.log('User data updated:', updatedData);
-        // Navigate back to profile page
         navigate(`/admin`);
       } else {
         console.error('Failed to update user data');
@@ -93,99 +88,132 @@ function AdminProfile() {
   };
 
   if (!userData) {
-    return <p>Loading...</p>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-pulse text-lg text-gray-600">Loading...</div>
+      </div>
+    );
   }
 
   return (
-    <div className="p-6 bg-white shadow-md rounded-lg w-1/2">
-      <h1 className="text-2xl font-bold mb-4 text-black text-center">Profile Info</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="w-full max-w-2xl p-8 bg-white shadow-lg rounded-lg transition-all">
+        <h1 className="text-3xl font-bold mb-8 text-gray-800 text-center">
+          Profile Info
+        </h1>
 
-      {/* Profile Data */}
-      {!isEditing ? (
-        <>
-          <div className="mb-2">
-            <strong className="text-black">Phone:</strong> <span className="text-gray-700">{userData.phone}</span>
-          </div>
+        {!isEditing ? (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-6">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <strong className="text-gray-700 block mb-1">Phone</strong>
+                <span className="text-gray-800 text-lg">{userData.phone}</span>
+              </div>
 
-          <div className="mb-2">
-            <strong className="text-black">Email:</strong> <span className="text-gray-700">{userData.email}</span>
-          </div>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <strong className="text-gray-700 block mb-1">Email</strong>
+                <span className="text-gray-800 text-lg">{userData.email}</span>
+              </div>
 
-          <div className="mb-2">
-            <strong className="text-black">Role:</strong> <span className="text-gray-700">{userData.role}</span>
-          </div>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <strong className="text-gray-700 block mb-1">Role</strong>
+                <span className="text-gray-800 text-lg">{userData.role}</span>
+              </div>
 
-          <div className="mb-2">
-            <strong className="text-black">Created At:</strong> <span className="text-gray-700">{new Date(userData.created_at).toLocaleString()}</span>
-          </div>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <strong className="text-gray-700 block mb-1">Created At</strong>
+                <span className="text-gray-800 text-lg">
+                  {new Date(userData.created_at).toLocaleString()}
+                </span>
+              </div>
+            </div>
 
-          <button
-            onClick={handleEditClick}
-            className="mt-4 px-4 py-2 text-white bg-blue-500 hover:bg-blue-600 rounded"
-          >
-            Edit Profile
-          </button>
-        </>
-      ) : (
-        // Edit Form
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-black" htmlFor="phone_number">Phone</label>
-            <input
-              type="text"
-              id="phone_number"
-              name="phone_number" // Change to `phone_number`
-              value={formData.phone_number} // Use `phone_number`
-              onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded text-gray-700"
-              required
-            />
+            <div className="flex justify-center mt-8">
+              <button
+                onClick={handleEditClick}
+                className="px-8 py-3 text-white bg-sky-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+              >
+                Edit Profile
+              </button>
+            </div>
           </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+              <div>
+                <label 
+                  className="block text-gray-700 text-sm font-medium mb-2" 
+                  htmlFor="phone_number"
+                >
+                  Phone
+                </label>
+                <input
+                  type="text"
+                  id="phone_number"
+                  name="phone_number"
+                  value={formData.phone_number}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                  required
+                />
+              </div>
 
-          <div className="mb-4">
-            <label className="block text-black" htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded text-gray-700"
-              required
-            />
-          </div>
+              <div>
+                <label 
+                  className="block text-gray-700 text-sm font-medium mb-2" 
+                  htmlFor="email"
+                >
+                  Email
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                  required
+                />
+              </div>
 
-          <div className="mb-4">
-            <label className="block text-black" htmlFor="role">Role</label>
-            <input
-              type="text"
-              id="role"
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              readOnly
-              className="w-full p-2 border border-gray-300 rounded text-gray-700"
-              required
-            />
-          </div>
+              <div>
+                <label 
+                  className="block text-gray-700 text-sm font-medium mb-2" 
+                  htmlFor="role"
+                >
+                  Role
+                </label>
+                <input
+                  type="text"
+                  id="role"
+                  name="role"
+                  value={formData.role}
+                  onChange={handleChange}
+                  readOnly
+                  className="w-full p-3 border border-gray-300 rounded-lg text-gray-700 bg-gray-50 cursor-not-allowed"
+                  required
+                />
+              </div>
+            </div>
 
-          <div className="flex justify-end gap-4">
-            <button
-              type="button"
-              onClick={handleEditClick}
-              className="px-4 py-2 text-white bg-gray-500 hover:bg-gray-600 rounded"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 text-white bg-blue-500 hover:bg-blue-600 rounded"
-            >
-              Save Changes
-            </button>
-          </div>
-        </form>
-      )}
+            <div className="flex justify-end gap-4 pt-6">
+              <button
+                type="button"
+                onClick={handleEditClick}
+                className="px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-3 text-white bg-sky-900 hover:bg-gray-700 rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+              >
+                Save Changes
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
     </div>
   );
 }

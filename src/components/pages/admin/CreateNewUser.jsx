@@ -156,8 +156,8 @@ const CreateUser = () => {
               >
                 <option value="Choose Role" disabled>Choose Role</option>
                 <option value="admin">Admin</option>
-                <option value="manager">Manager</option>
-                <option value="driver">Driver</option>
+                <option value="analyst">Data Analyst</option>
+                <option value="data_entry_clerk">Data Entry Clerk</option>
               </select>
               {errors.role && <p className="text-red-500 text-sm">{errors.role}</p>}
             </div>

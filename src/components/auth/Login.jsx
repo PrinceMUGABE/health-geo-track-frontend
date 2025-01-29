@@ -7,7 +7,7 @@ import {
   EyeSlashIcon,
 } from "@heroicons/react/20/solid";
 import axios from "axios";
-import loginImage from "../../assets/pictures/coaster2.jpg";
+import loginImage from "../../assets/pictures/system/home1.jpeg";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -97,11 +97,14 @@ const Login = () => {
 
           if (user.role.trim().toLowerCase() === "admin") {
             navigate("/admin");
-          } else if (user.role.trim().toLowerCase() === "manager") {
-            navigate("/manager");
-          } else if (user.role.trim().toLowerCase() === "driver") {
-            navigate("/driver");
-          } else {
+          } else if (user.role.trim().toLowerCase() === "data_entry_clerk") {
+            navigate("/data_entry_clerk");
+
+          }else if (user.role.trim().toLowerCase() === "analyst") {
+            navigate("/data_analyst/data");
+          }
+          
+          else {
             console.log("Unknown user role. Please contact support.");
           }
         } else {
@@ -110,7 +113,10 @@ const Login = () => {
       })
       .catch((error) => {
         setIsLoading(false);
-        console.error("Error during login:", error.response || error.message || error);
+        console.error(
+          "Error during login:",
+          error.response || error.message || error
+        );
         setError("Invalid phone number or password.");
       });
   };
@@ -118,8 +124,11 @@ const Login = () => {
   return (
     <div className="relative flex justify-center items-center min-h-screen bg-gradient-to-r from-blue-500 to-purple-600 px-4 sm:px-6 lg:px-8">
       {/* Background Image and Overlay */}
-      <div className="absolute inset-0 bg-cover bg-center opacity-50" style={{ backgroundImage: `url(${loginImage})` }}></div>
-      
+      <div
+        className="absolute inset-0 bg-cover bg-center opacity-50"
+        style={{ backgroundImage: `url(${loginImage})` }}
+      ></div>
+
       <div className="max-w-md w-full space-y-8 bg-white bg-opacity-90 rounded-lg shadow-lg p-8 z-10">
         <div className="text-center">
           <h2 className="mt-2 text-2xl font-bold text-gray-900">
@@ -148,6 +157,14 @@ const Login = () => {
               required
             />
           </div>
+
+          <Link
+            to="/passwordreset"
+            className="text-sm text-blue-700 hover:text-black text-end"
+          >
+            Forgot your password?
+          </Link>
+
           <div>
             <label
               htmlFor="password"
@@ -180,7 +197,7 @@ const Login = () => {
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-sky-900 hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -210,19 +227,16 @@ const Login = () => {
             </button>
           </div>
         </form>
-        <div className="text-center">
-          <Link
-            to="/passwordreset"
-            className="text-sm text-blue-500 hover:underline"
-          >
-            Forgot your password?
+
+        {/* <div className="mt-3 text-sm text-gray-600">
+          Do not have an account?{" "}
+          <Link to="/signup" className="text-sky-900 hover:text-black">
+            Signup here
           </Link>
-        </div>
-        <div className="text-center">
-          <Link
-            to="/"
-            className="text-sm text-blue-500 hover:underline"
-          >
+        </div> */}
+
+        <div className="text-start">
+          <Link to="/" className="text-sm text-blue-700 hover:text-black">
             Back to home
           </Link>
         </div>

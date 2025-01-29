@@ -1,467 +1,762 @@
-/* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { Users, Activity, Building2, PieChart } from "lucide-react";
+
 import {
-  Chart as ChartJS,
   ArcElement,
   CategoryScale,
   LinearScale,
-  PointElement,
-  LineElement,
   BarElement,
+  LineElement,
   Title,
   Tooltip,
   Legend,
   Filler,
-} from "chart.js";
-import { Line, Pie, Bar } from "react-chartjs-2";
-import { useNavigate } from "react-router-dom";
 
-// Register ChartJS components
+} from "chart.js";
+import { Chart as ChartJS, registerables } from 'chart.js';
+
+import { Bar, Doughnut, Line, Pie } from "react-chartjs-2";
+import GaugeChart from "react-gauge-chart";
+
 ChartJS.register(
+  ...registerables,
   ArcElement,
   CategoryScale,
   LinearScale,
-  PointElement,
-  LineElement,
   BarElement,
+  LineElement,
   Title,
   Tooltip,
   Legend,
   Filler
 );
 
+const COLORS = [
+  "#0088FE",
+  "#00C49F",
+  "#FFBB28",
+  "#FF8042",
+  "#8884d8",
+  "#82ca9d",
+];
+
+const BASE_URL = "http://127.0.0.1:8000";
+
 function AdminHome() {
   const navigate = useNavigate();
+
+  // State Management
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [userData, setUserData] = useState([]);
-  const [areaChartData, setAreaChartData] = useState({
-    labels: [],
-    datasets: [],
-  });
-  const [pieChartData, setPieChartData] = useState({
-    labels: [],
-    datasets: [],
-  });
-  const [expenseChartData, setExpenseChartData] = useState({
-    labels: [],
-    datasets: [],
-  });
-  const [reimbursementChartData, setReimbursementChartData] = useState({
-    labels: [],
-    datasets: [],
-  });
-  const [recentExpenses, setRecentExpenses] = useState([]);
-  const [recentReimbursements, setRecentReimbursements] = useState([]);
+  const [allocations, setAllocations] = useState([]);
+  const [facilities, setFacilities] = useState([]);
+  const [populations, setPopulations] = useState([]);
+  const [incidents, setIncidents] = useState([]);
+  const [accessibilities, setAccessibilities] = useState([]);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    console.log("Retrieved Token:", token);
+  // State for data forms
+  const [accessibilityData, setAccessibilityData] = useState({
+    health_facility_id: "",
+    people_served: "",
+    avg_travel_time: "",
+    distance_to_nearest_facility: "",
+  });
 
-    const fetchUsers = async () => {
-      try {
-        const res = await axios.get("http://127.0.0.1:8000/users/", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.data && res.data.users) {
-          setUserData(res.data.users);
-          console.log("Fetched Users Data:", res.data.users);
-          processUserChartData(res.data.users);
-        }
-      } catch (error) {
-        console.error("Error fetching users:", error);
-        handleAuthError(error);
+  const [populationData, setPopulationData] = useState({
+    district: "",
+    sector: "",
+    total_population: "",
+    male_population: "",
+    female_population: "",
+    children_under_5: "",
+    youth_population: "",
+    adult_population: "",
+    elderly_population: "",
+    population_density: "",
+    socioeconomic_status: "LOW",
+    unemployment_rate: "",
+    literacy_rate: "",
+  });
+
+  const [allocationData, setAllocationData] = useState({
+    health_facility_id: "",
+    description: "",
+    personnel_count: "",
+    duration_in_days: "",
+  });
+
+  // Chart Data State
+  const [chartData, setChartData] = useState({
+    histogram: { labels: [], datasets: [] },
+    doughnut: { labels: [], datasets: [] },
+  });
+
+  // Fetch Functions
+  const fetchAllocations = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${BASE_URL}/resource_allocation/allocations/`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAllocations(data);
+      } else {
+        setError("Failed to fetch resource allocations");
       }
-    };
-
-    const fetchExpenses = async () => {
-      try {
-        const res = await axios.get("http://127.0.0.1:8000/expense/expenses/", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.data && res.data.expenses) {
-          console.log("Fetched Expenses Data:", res.data.expenses);
-          processExpenseChartData(res.data.expenses);
-          setRecentExpenses(res.data.expenses.slice(0, 5)); // Fetch 5 recent expenses
-        }
-      } catch (error) {
-        console.error("Error fetching Expenses:", error);
-        handleAuthError(error);
-      }
-    };
-
-    const fetchReimbursements = async () => {
-      try {
-        const res = await axios.get(
-          "http://127.0.0.1:8000/reimbursement/reimbursements/",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        if (res.data && res.data) {
-          console.log("Fetched Reimbursements Data:", res.data);
-          processReimbursementChartData(res.data);
-          setRecentReimbursements(res.data.slice(0, 5)); // Fetch 5 recent reimbursements
-        }
-      } catch (error) {
-        console.error("Error fetching Reimbursements:", error);
-        handleAuthError(error);
-      }
-    };
-
-    fetchUsers();
-    fetchExpenses();
-    fetchReimbursements();
-  }, []);
-
-  const handleAuthError = (err) => {
-    if (err.response && err.response.status === 401) {
-      alert("Session expired. Please log in again.");
-      navigate("/login");
+    } catch (err) {
+      setError("Error fetching resource allocations");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const processUserChartData = (data) => {
-    const roles = ["admin", "manager", "driver"];
-    const colors = {
-      admin: "rgba(75,192,192,0.2)",
-      manager: "rgba(255,99,132,0.2)",
-      driver: "rgba(54,162,235,0.2)",
-    };
-    const borderColors = {
-      admin: "rgba(75,192,192,1)",
-      manager: "rgba(255,99,132,1)",
-      driver: "rgba(54,162,235,1)",
-    };
-
-    const usersByRoleAndDate = data.reduce((acc, user) => {
-      const role = user.role;
-      const date = new Date(user.created_at).toLocaleDateString();
-      if (!acc[role]) acc[role] = {};
-      acc[role][date] = acc[role][date] ? acc[role][date] + 1 : 1;
-      return acc;
-    }, {});
-
-    const labels = [
-      ...new Set(
-        data.map((user) => new Date(user.created_at).toLocaleDateString())
-      ),
-    ].sort();
-
-    const areaChartDatasets = roles.map((role) => ({
-      label: role.charAt(0).toUpperCase() + role.slice(1),
-      data: labels.map((date) => usersByRoleAndDate[role]?.[date] || 0),
-      fill: true,
-      backgroundColor: colors[role],
-      borderColor: borderColors[role],
-      tension: 0.4,
-    }));
-
-    const roleCounts = roles.reduce((acc, role) => {
-      acc[role] = data.filter((user) => user.role === role).length;
-      return acc;
-    }, {});
-
-    const pieChartDataset = {
-      labels: roles.map((role) => role.charAt(0).toUpperCase() + role.slice(1)),
-      datasets: [
-        {
-          data: roles.map((role) => roleCounts[role]),
-          backgroundColor: roles.map((role) => colors[role]),
-          borderColor: roles.map((role) => borderColors[role]),
-          borderWidth: 1,
+  const fetchFacilities = async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/facility/facilities/`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      ],
-    };
+      });
 
-    setAreaChartData({ labels, datasets: areaChartDatasets });
-    setPieChartData(pieChartDataset);
+      if (response.ok) {
+        const data = await response.json();
+        setFacilities(data);
+      }
+    } catch (error) {
+      console.error("Error fetching facilities:", error);
+    }
   };
 
-  const processExpenseChartData = (data) => {
-    const statuses = ["pending", "approved", "rejected"];
-    const colors = {
-      pending: "rgba(255,165,0,0.2)",
-      approved: "rgba(75,192,192,0.2)",
-      rejected: "rgba(255,99,132,0.2)",
-    };
-    const borderColors = {
-      pending: "rgba(255,165,0,1)",
-      approved: "rgba(75,192,192,1)",
-      rejected: "rgba(255,99,132,1)",
-    };
+  const fetchPopulations = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${BASE_URL}/population/populations/`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
 
-    const expensesByStatusAndDate = data.reduce((acc, expense) => {
-      const status = expense.status;
-      const date = new Date(expense.created_at).toLocaleDateString();
-      if (!acc[status]) acc[status] = {};
-      acc[status][date] = acc[status][date] ? acc[status][date] + 1 : 1;
-      return acc;
-    }, {});
-
-    const labels = [
-      ...new Set(
-        data.map((expense) => new Date(expense.created_at).toLocaleDateString())
-      ),
-    ].sort();
-
-    const datasets = statuses.map((status) => ({
-      label: status.charAt(0).toUpperCase() + status.slice(1),
-      data: labels.map((date) => expensesByStatusAndDate[status]?.[date] || 0),
-      fill: false,
-      backgroundColor: colors[status],
-      borderColor: borderColors[status],
-      tension: 0.4,
-    }));
-
-    setExpenseChartData({ labels, datasets });
+      if (response.ok) {
+        const data = await response.json();
+        setPopulations(data);
+      } else {
+        setError("Failed to fetch population data");
+      }
+    } catch (err) {
+      setError("Error fetching population data");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const processReimbursementChartData = (data) => {
-    const statuses = ["Paid", "Unpaid"];
-    const colors = {
-      Paid: "rgba(54,162,235,0.2)",
-      Unpaid: "rgba(255,99,132,0.2)",
-    };
-    const borderColors = {
-      Paid: "rgba(54,162,235,1)",
-      Unpaid: "rgba(255,99,132,1)",
-    };
+  const fetchIncidents = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${BASE_URL}/incident/incidents/`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
 
-    const reimbursementsByStatusAndDate = data.reduce((acc, reimbursement) => {
-      const status = reimbursement.is_paid ? "Paid" : "Unpaid";
-      const date = new Date(reimbursement.created_at).toLocaleDateString();
-      if (!acc[status]) acc[status] = {};
-      acc[status][date] = acc[status][date] ? acc[status][date] + 1 : 1;
-      return acc;
-    }, {});
-
-    const labels = [
-      ...new Set(
-        data.map((reimbursement) =>
-          new Date(reimbursement.created_at).toLocaleDateString()
-        )
-      ),
-    ].sort();
-
-    const datasets = statuses.map((status) => ({
-      label: status,
-      data: labels.map(
-        (date) => reimbursementsByStatusAndDate[status]?.[date] || 0
-      ),
-      fill: false,
-      backgroundColor: colors[status],
-      borderColor: borderColors[status],
-      tension: 0.4,
-    }));
-
-    setReimbursementChartData({
-      labels: labels.map(String),
-      datasets: datasets.map((dataset) => ({
-        ...dataset,
-        data: dataset.data.map(Number),
-      })),
-    });
+      if (response.ok) {
+        const data = await response.json();
+        setIncidents(data);
+      } else {
+        setError("Failed to fetch incidents");
+      }
+    } catch (err) {
+      setError("Error fetching incidents");
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const fetchAccessibilities = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${BASE_URL}/accessibility/accessibilities/`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAccessibilities(data);
+      } else {
+        setError("Failed to fetch accessibility data");
+      }
+    } catch (err) {
+      setError("Error fetching accessibility data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Chart Configuration
   const chartOptions = {
     responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: "bottom" },
+      tooltip: { enabled: true },
+    },
+  };
+
+  const lineChartOptions = {
+    ...chartOptions,
+    scales: {
+      y: { beginAtZero: true },
+      x: { grid: { display: false } },
+    },
+  };
+
+  const areaChartOptions = {
+    ...chartOptions,
     scales: {
       y: {
         beginAtZero: true,
-        ticks: {
-          stepSize: 1,
+        stacked: true,
+      },
+      x: { grid: { display: false } },
+    },
+    plugins: {
+      filler: { propagate: true },
+    },
+  };
+
+  const doughnutOptions = {
+    ...chartOptions,
+    cutout: "70%",
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: function (context) {
+            return `${context.label}: ${context.raw} users`;
+          },
         },
       },
     },
-    plugins: {
-      title: {
-        display: true,
+  };
+
+  // Modified Data Preparation Function
+  const processDashboardChartData = (userData) => {
+    if (!userData.length) return;
+
+    // User Registration Trends
+    const userDates = [...new Set(userData.map(user => 
+      new Date(user.created_at).toISOString().split('T')[0]
+    ))].sort();
+
+    const lastUserDays = userDates.slice(-5);
+    const roles = ['admin', 'analyst', 'data_entry_clerk'];
+
+    const usersByRole = roles.reduce((acc, role) => {
+      acc[role] = lastUserDays.map(date => 
+        userData.filter(user => 
+          user.role === role && 
+          new Date(user.created_at).toISOString().split('T')[0] === date
+        ).length
+      );
+      return acc;
+    }, {});
+
+    const roleCounts = userData.reduce((acc, user) => {
+      acc[user.role] = (acc[user.role] || 0) + 1;
+      return acc;
+    }, {});
+
+    const displayUserDates = lastUserDays.map(date => {
+      const displayDate = new Date(date);
+      return displayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    });
+
+    return {
+      histogram: {
+        labels: displayUserDates,
+        datasets: roles.map((role, index) => ({
+          label: role.charAt(0).toUpperCase() + role.slice(1),
+          data: usersByRole[role],
+          backgroundColor: COLORS[index],
+          borderColor: COLORS[index],
+          borderWidth: 1,
+        })),
       },
-    },
+      doughnut: {
+        labels: roles.map(role => role.charAt(0).toUpperCase() + role.slice(1)),
+        datasets: [{
+          data: roles.map(role => roleCounts[role] || 0),
+          backgroundColor: COLORS.slice(0, roles.length),
+          borderColor: COLORS.slice(0, roles.length),
+          borderWidth: 1,
+        }],
+      },
+    };
   };
 
-  // Add new state for map center
-  const [center, setCenter] = useState({
-    lat: 1.3521,  // Default to Singapore coordinates
-    lng: 103.8198
-  });
+  // Prepare Data for Various Charts
+  const prepareFacilityTypeLineData = () => {
+    const typeCounts = facilities.reduce((acc, facility) => {
+      acc[facility.facility_type] = (acc[facility.facility_type] || 0) + 1;
+      return acc;
+    }, {});
 
-  const mapContainerStyle = {
-    width: "100%",
-    height: "400px",
-    marginTop: "2rem",
+    return {
+      labels: Object.keys(typeCounts),
+      datasets: [
+        {
+          label: "Facility Types",
+          data: Object.values(typeCounts),
+          borderColor: COLORS[0],
+          backgroundColor: COLORS[0] + "80",
+        },
+      ],
+    };
   };
 
-  const MapComponent = () => {
+  const prepareFacilityStatusAreaData = () => {
+    const statusCounts = facilities.reduce((acc, facility) => {
+      acc[facility.status] = (acc[facility.status] || 0) + 1;
+      return acc;
+    }, {});
+
+    return {
+      labels: Object.keys(statusCounts),
+      datasets: [
+        {
+          label: "Facility Status",
+          data: Object.values(statusCounts),
+          backgroundColor: COLORS[1] + "80",
+          borderColor: COLORS[1],
+        },
+      ],
+    };
+  };
+
+  const preparePopulationAgeColumnData = () => {
+    const ageGroups = populations.reduce(
+      (acc, pop) => ({
+        children: acc.children + parseInt(pop.children_under_5),
+        youth: acc.youth + parseInt(pop.youth_population),
+        adults: acc.adults + parseInt(pop.adult_population),
+        elderly: acc.elderly + parseInt(pop.elderly_population),
+      }),
+      { children: 0, youth: 0, adults: 0, elderly: 0 }
+    );
+
+    return {
+      labels: ["Children (0-5)", "Youth", "Adults", "Elderly"],
+      datasets: [
+        {
+          label: "Population Age Distribution",
+          data: [
+            ageGroups.children,
+            ageGroups.youth,
+            ageGroups.adults,
+            ageGroups.elderly,
+          ],
+          backgroundColor: COLORS.slice(0, 4),
+        },
+      ],
+    };
+  };
+
+  const userDistributionGaugeData = () => {
+    const roleCounts = ["admin", "analyst", "data_entry_clerk"].map(
+      (role) => userData.filter((user) => user.role === role).length
+    );
+
+    return {
+      labels: ["Admin", "Analyst", "Data Entry Clerk"],
+      datasets: [{ data: roleCounts }],
+    };
+  };
+
+  // Resource Allocation Data
+  const resourceAllocationData = () => {
+    const durationDistribution = [
+      {
+        name: "0-15 Days",
+        value: allocations.filter((a) => a.duration_in_days <= 15).length,
+      },
+      {
+        name: "16-30 Days",
+        value: allocations.filter(
+          (a) => a.duration_in_days > 15 && a.duration_in_days <= 30
+        ).length,
+      },
+      {
+        name: "31-60 Days",
+        value: allocations.filter(
+          (a) => a.duration_in_days > 30 && a.duration_in_days <= 60
+        ).length,
+      },
+      {
+        name: "60+ Days",
+        value: allocations.filter((a) => a.duration_in_days > 60).length,
+      },
+    ];
+
+    return {
+      labels: durationDistribution.map((item) => item.name),
+      datasets: [
+        {
+          data: durationDistribution.map((item) => item.value),
+          backgroundColor: COLORS,
+        },
+      ],
+    };
+  };
+
+  // Summary Card Component
+  const SummaryCard = ({ title, value, icon: Icon, bgColor }) => (
+    <div className={`${bgColor} rounded-lg shadow-lg p-6`}>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-white text-sm">{title}</p>
+          <h3 className="text-white text-2xl font-bold">{value}</h3>
+        </div>
+        <Icon className="h-12 w-12 text-white opacity-75" />
+      </div>
+    </div>
+  );
+
+  // Chart Section Component
+  const ChartSection = ({ title, total, children }) => (
+    <div className="bg-white p-6 rounded-lg shadow-md h-64">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold text-black">{title}</h3>
+        <span className="text-sm text-gray-600">Total: {total}</span>
+      </div>
+      <div className="h-48">{children}</div>
+    </div>
+  );
+
+ // Updated useEffect
+ useEffect(() => {
+  const fetchAllData = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const usersRes = await fetch(`${BASE_URL}/users/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const usersData = await usersRes.json();
+      const users = usersData.users || [];
+      setUserData(users);
+      
+      // Process chart data after setting user data
+      const chartDataResult = processDashboardChartData(users);
+      if (chartDataResult) {
+        setChartData(chartDataResult);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setError(error.message);
+    }
+
+    // Fetch other data
+    await Promise.all([
+      fetchAllocations(),
+      fetchFacilities(),
+      fetchPopulations(),
+      fetchIncidents(),
+      fetchAccessibilities()
+    ]);
+  };
+
+  fetchAllData();
+}, [navigate]);
+
+
+
+  if (loading) {
     return (
-      <div className="w-full p-4 bg-white rounded shadow-md mt-8">
-        <h2 className="text-lg font-semibold mb-4 text-center text-black">
-          Location Overview
-        </h2>
-        <div style={mapContainerStyle}>
-          <iframe
-            title="Default Map"
-            width="100%"
-            height="100%"
-            frameBorder="0"
-            src={`https://www.openstreetmap.org/export/embed.html?bbox=${
-              center.lng - 0.1
-            }%2C${center.lat - 0.1}%2C${center.lng + 0.1}%2C${
-              center.lat + 0.1
-            }&amp;layer=mapnik`}
-          ></iframe>
+      <div className="mt-20 p-6 flex items-center justify-center">
+        <div className="text-lg font-semibold text-gray-600">
+          Loading dashboard data...
         </div>
       </div>
     );
+  }
+
+  if (error) {
+    return (
+      <div className="mt-20 p-6 flex items-center justify-center">
+        <div className="text-lg font-semibold text-red-600">Error: {error}</div>
+      </div>
+    );
+  }
+
+
+  // Modified Facility Type Chart (now Area Chart)
+  const prepareFacilityTypeAreaData = () => {
+    const typeCounts = facilities.reduce((acc, facility) => {
+      acc[facility.facility_type] = (acc[facility.facility_type] || 0) + 1;
+      return acc;
+    }, {});
+
+    return {
+      labels: Object.keys(typeCounts),
+      datasets: [{
+        label: 'Facility Types',
+        data: Object.values(typeCounts),
+        fill: true,
+        borderColor: COLORS[0],
+        backgroundColor: `${COLORS[0]}40`,
+        tension: 0.4
+      }]
+    };
   };
 
+
+
+  
+  const prepareIncidentStatusData = () => {
+    const statusCounts = incidents.reduce((acc, incident) => {
+      acc[incident.status] = (acc[incident.status] || 0) + 1;
+      return acc;
+    }, {});
+  
+    return {
+      labels: Object.keys(statusCounts),
+      datasets: [
+        {
+          label: "Incident Status Distribution",
+          data: Object.values(statusCounts),
+          backgroundColor: COLORS.slice(0, Object.keys(statusCounts).length),
+        },
+      ],
+    };
+  };
+  
+
+ // Modified incident trend data preparation
+ const prepareIncidentTrendData = () => {
+  // Define status colors
+  const statusColors = {
+    'ACTIVE': '#FF8042',
+    'RESOLVED': '#00C49F',
+    'UNDER_INVESTIGATION': '#FFBB28',
+    'CONTAINED': '#0088FE'
+  };
+
+  // Group incidents by date and status
+  const incidentsByDateAndStatus = incidents.reduce((acc, incident) => {
+    const date = new Date(incident.created_at).toLocaleDateString();
+    if (!acc[date]) {
+      acc[date] = {
+        'ACTIVE': 0,
+        'RESOLVED': 0,
+        'UNDER_INVESTIGATION': 0,
+        'CONTAINED': 0
+      };
+    }
+    acc[date][incident.status]++;
+    return acc;
+  }, {});
+
+  // Sort dates
+  const sortedDates = Object.keys(incidentsByDateAndStatus).sort((a, b) => 
+    new Date(a) - new Date(b)
+  );
+
+  // Create datasets for each status
+  const datasets = Object.keys(statusColors).map(status => ({
+    label: status.replace(/_/g, ' '),
+    data: sortedDates.map(date => incidentsByDateAndStatus[date][status]),
+    fill: true,
+    backgroundColor: `${statusColors[status]}80`,
+    borderColor: statusColors[status],
+    tension: 0.4
+  }));
+
+  return {
+    labels: sortedDates,
+    datasets: datasets
+  };
+};
+
+// Modified area chart options for stacked view
+const stackedAreaOptions = {
+  ...chartOptions,
+  scales: {
+    x: {
+      grid: { display: false }
+    },
+    y: {
+      stacked: true,
+      beginAtZero: true
+    }
+  },
+  plugins: {
+    ...chartOptions.plugins,
+    tooltip: {
+      mode: 'index',
+      intersect: false
+    }
+  },
+  interaction: {
+    mode: 'nearest',
+    axis: 'x',
+    intersect: false
+  }
+};
+
+
+
+  // Add horizontal bar chart options
+  const horizontalBarOptions = {
+    ...chartOptions,
+    indexAxis: 'y',
+    scales: {
+      x: {
+        beginAtZero: true,
+      },
+      y: {
+        grid: { display: false }
+      }
+    }
+  };
+
+
   return (
-    <div className="mt-20 flex flex-col items-center">
-      <div className="w-full flex flex-wrap justify-start gap-8">
-        <div className="flex-1 min-w-[300px] md:max-w-[48%] p-4 bg-white rounded shadow-md">
-          <h2 className="text-lg font-semibold mb-4 text-center text-black">
-            Users Over Time
-          </h2>
-          <Line
-            data={areaChartData}
-            options={{
-              ...chartOptions,
-              plugins: {
-                ...chartOptions.plugins,
-                title: { text: "Users Over Time" },
-              },
-            }}
-          />
-        </div>
+    <div className=" ml-4 p-6 space-y-6 justify-center">
+      <h1 className="text-blue-950 font-extrabold text-center text-4xl mb-8">
+        Healthcare Analytics Dashboard
+      </h1>
 
-        <div className="flex-1 min-w-[200px] md:max-w-[30%] p-4 bg-white rounded shadow-md">
-          <h2 className="text-lg font-semibold mb-4 text-center text-black">
-            User Distribution by Role
-          </h2>
-          <Pie data={pieChartData} options={chartOptions} />
-        </div>
-
-        <div className="flex-1 min-w-[300px] md:max-w-[48%] p-4 bg-white rounded shadow-md">
-          <h2 className="text-lg font-semibold mb-4 text-center text-black">
-            Expenses Over Time by Status
-          </h2>
-          <Line
-            data={expenseChartData}
-            options={{
-              ...chartOptions,
-              plugins: {
-                ...chartOptions.plugins,
-                title: { text: "Expenses Over Time by Status" },
-              },
-            }}
-          />
-        </div>
-
-        <div className="flex-1 min-w-[300px] md:max-w-[48%] p-4 bg-white rounded shadow-md">
-          <h2 className="text-lg font-semibold mb-4 text-center text-black">
-            Reimbursements Over Time by Payment Status
-          </h2>
-          <Bar
-            data={reimbursementChartData}
-            options={{
-              ...chartOptions,
-              plugins: {
-                ...chartOptions.plugins,
-                title: { text: "Reimbursements Over Time by Payment Status" },
-              },
-            }}
-          />
-        </div>
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <SummaryCard
+          title="Total Users"
+          value={userData.length}
+          icon={Users}
+          bgColor="bg-gradient-to-r from-blue-500 to-blue-600"
+        />
+        <SummaryCard
+          title="Total Facilities"
+          value={facilities.length}
+          icon={Building2}
+          bgColor="bg-gradient-to-r from-green-500 to-green-600"
+        />
+        <SummaryCard
+          title="Total Incidents"
+          value={incidents.length}
+          icon={Activity}
+          bgColor="bg-gradient-to-r from-red-500 to-red-600"
+        />
+        <SummaryCard
+          title="Resource Allocations"
+          value={allocations.length}
+          icon={PieChart}
+          bgColor="bg-gradient-to-r from-purple-500 to-purple-600"
+        />
       </div>
 
-      <div className="w-full flex flex-wrap justify-start gap-8 mt-8">
-        {/* Recent Expenses and Reimbursements */}
-        <div className="flex-1 min-w-[300px] md:max-w-[48%] p-4 bg-white rounded shadow-md">
-          <h2 className="text-lg font-semibold mb-4 text-center text-black">
-            Recent Expenses
-          </h2>
-          <ul className="list-none">
-            {recentExpenses.map((expense, index) => (
-              <li key={index} className="mb-4 p-4 border-b border-gray-200">
-                <div className="flex justify-between items-center">
-                  <div className="font-semibold text-gray-700">
-                    <span className="text-black">
-                      {expense.user.phone_number}
-                    </span>
-                  </div>
-                  <div className="font-semibold text-gray-700">
-                    {/* <span>Amount: </span> */}
-                    <span className="text-black">{expense.amount}</span>
-                  </div>
-                  <div
-                    className={`font-semibold ${
-                      expense.status === "pending"
-                        ? "text-orange-600"
-                        : expense.status === "approved"
-                        ? "text-green-600"
-                        : "text-red-600"
-                    }`}
-                  >
-                    {/* <span>Status: </span> */}
-                    <span>{expense.status}</span>
-                  </div>
-                  <div className="text-green-700">
-                    {/* <span>Date: </span> */}
-                    <span>
-                      {new Date(expense.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
+      {/* Analytics Sections */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+        {/* User Registration Trends */}
+        <ChartSection title="User Registration Trends" total={userData.length}>
+          <Bar data={chartData.histogram} options={chartOptions} />
+        </ChartSection>
 
-        <div className="flex-1 min-w-[300px] md:max-w-[48%] p-4 bg-white rounded shadow-md">
-          <h2 className="text-lg font-semibold mb-4 text-center text-black">
-            Recent Reimbursements
-          </h2>
-          <ul>
-            {recentReimbursements.map((reimbursement, index) => (
-              <li
-                key={index}
-                className="mb-4 p-4 border-b border-gray-200 flex justify-between items-center"
-              >
-                <div className="font-semibold text-gray-700">
-                  <span> {reimbursement.expense.user.phone_number}</span>
-                </div>
-                {/* Amount */}
-                <div className="font-semibold text-gray-700">
-                  <span>{reimbursement.expense.amount}</span>
-                </div>
+        {/* Update the User Distribution to use a sliced Pie chart */}
+    <ChartSection title="User Distribution" total={userData.length}>
+      <Pie 
+        data={chartData.doughnut} 
+        options={{
+          ...chartOptions,
+          plugins: {
+            ...chartOptions.plugins,
+            legend: {
+              position: 'bottom'
+            }
+          },
+          rotation: -90,
+          circumference: 360,
+        }} 
+      />
+    </ChartSection>
 
-                {/* Status */}
-                <div
-                  className={`font-semibold ${
-                    reimbursement.is_paid ? "text-green-600" : "text-red-600"
-                  }`}
-                >
-                  <span>{reimbursement.is_paid ? "Paid" : "Unpaid"}</span>
-                </div>
+    {/* Updated Incident Trend Over Time */}
+           <ChartSection 
+              title="Incident Trends by Status" 
+              total={incidents.length}
+            >
+              <Line
+                data={prepareIncidentTrendData()}
+                options={stackedAreaOptions}
+              />
+            </ChartSection>
+    
+            {/* Incident Status Distribution */}
+            <ChartSection 
+              title="Incidents by Status" 
+              total={incidents.length}
+            >
+              <Bar
+                data={prepareIncidentStatusData()}
+                options={horizontalBarOptions}
+              />
+            </ChartSection>
 
-                {/* Date */}
-                <div className="text-green-700">
-                  <span>
-                    {new Date(reimbursement.created_at).toLocaleDateString()}
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
+        {/* Facility Types */}
+        {/* Replace the Line chart with Area chart */}
+    <ChartSection title="Facility Types" total={facilities.length}>
+      <Line
+        data={prepareFacilityTypeAreaData()}
+        options={{
+          ...lineChartOptions,
+          plugins: {
+            ...lineChartOptions.plugins,
+            filler: {
+              propagate: true
+            }
+          }
+        }}
+      />
+    </ChartSection>
+
+        {/* Facility Status */}
+        <ChartSection title="Facility Status" total={facilities.length}>
+          <Line
+            data={prepareFacilityStatusAreaData()}
+            options={areaChartOptions}
+            type="area"
+          />
+        </ChartSection>
+
+        {/* Population Age Distribution */}
+        <ChartSection
+          title="Population Age Groups"
+          total={populations.reduce(
+            (sum, pop) => sum + pop.total_population,
+            0
+          )}
+        >
+          <Bar data={preparePopulationAgeColumnData()} options={chartOptions} />
+        </ChartSection>
+
+        {/* Resource Allocation Distribution */}
+        <ChartSection
+          title="Resource Allocation Durations"
+          total={allocations.length}
+        >
+          <Pie data={resourceAllocationData()} options={doughnutOptions} />
+        </ChartSection>
       </div>
-
-       {/* Add the map component at the bottom */}
-       {/* <div className="w-full">
-        <MapComponent />
-      </div> */}
     </div>
   );
 }
-
 export default AdminHome;

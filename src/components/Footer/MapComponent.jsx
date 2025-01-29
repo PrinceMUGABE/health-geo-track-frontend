@@ -1,43 +1,64 @@
-/* eslint-disable no-unused-vars */
 import React, { useEffect } from "react";
 import L from "leaflet";
-import "leaflet/dist/leaflet.css"; // Import Leaflet styles
+import "leaflet/dist/leaflet.css";
+
+// Import marker images directly
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
 const MapComponent = () => {
   useEffect(() => {
-    // Check if the map has already been initialized to avoid re-initialization
-    if (document.getElementById("map")._leaflet_id) {
-      return; // If the map is already initialized, return early
-    }
+    // Ensure map container exists and hasn't been initialized
+    const mapContainer = document.getElementById("map");
+    if (!mapContainer || mapContainer._leaflet_id) return;
 
-    // Initialize the map
-    const map = L.map("map", {
-      center: [1.9441, 29.8739], // Coordinates for Rwanda
-      zoom: 8, // Initial zoom level
+    // Create custom icon using imported images
+    const defaultIcon = L.icon({
+      iconUrl: markerIcon,
+      iconRetinaUrl: markerIcon2x,
+      shadowUrl: markerShadow,
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
     });
 
-    // Add OpenStreetMap tile layer
+    // Set default icon for all markers
+    L.Marker.prototype.options.icon = defaultIcon;
+
+    // Initialize map
+    const map = L.map("map", {
+      center: [-1.908585181820936, 30.06428949699932],
+      zoom: 8
+    });
+
+    // Add tile layer
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    // Add a marker at a specific location (e.g., Kigali, Rwanda)
-    L.marker([1.9441, 29.8739])
+    // Add marker
+    L.marker([-1.908585181820936, 30.06428949699932])
       .addTo(map)
-      .bindPopup("<b>Kigali</b><br>Capital of Rwanda.")
+      .bindPopup("<b>Our Location</b>")
       .openPopup();
-  }, []); // Empty dependency array ensures this effect runs only once
+
+    // Cleanup function
+    return () => {
+      map.remove();
+    };
+  }, []); 
 
   return (
     <div
       id="map"
       style={{
-        height: "200px", // Adjust the height of the map
-        width: "100%", // Make the map take the full width of its container
+        height: "200px",
+        width: "100%",
       }}
-      className="lg:w-full w-[300%]" // Adjust the width for larger screens
-    ></div>
+      className="w-full"
+    />
   );
 };
 

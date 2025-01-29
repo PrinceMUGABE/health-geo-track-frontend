@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import loginImage from "../../assets/pictures/img3.jpg";
+import loginImage from "../../assets/pictures/system/home1.jpeg";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -32,7 +32,7 @@ const ResetPassword = () => {
   };
 
   const validatePassword = (password) => {
-    const minLength = 5;
+    const minLength = 8;
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
     const hasUppercase = /[A-Z]/.test(password);
     const hasLowercase = /[a-z]/.test(password);
@@ -55,7 +55,7 @@ const ResetPassword = () => {
 
     if (!validatePassword(formData.new_password)) {
       setIsLoading(false);
-      setError('Password must be at least 5 characters long, contain a special character, an uppercase letter, a lowercase letter, and a number.');
+      setError('Password must be at least 8 characters long, contain a special character, an uppercase letter, a lowercase letter, and a number.');
       return;
     }
 
@@ -134,7 +134,7 @@ const ResetPassword = () => {
               type="text"
               value={formData.phone}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="mt-1 text-gray-700 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               required
             />
           </div>
@@ -151,14 +151,14 @@ const ResetPassword = () => {
               type="password"
               value={formData.new_password}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="mt-1 block text-gray-700 w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               required
             />
           </div>
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-sky-900 hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -191,7 +191,7 @@ const ResetPassword = () => {
         <div className="text-center">
           <Link
             to="/login"
-            className="text-sm text-blue-500 hover:underline"
+            className="text-sm text-blue-700 hover:text-black"
           >
             Back to Login
           </Link>

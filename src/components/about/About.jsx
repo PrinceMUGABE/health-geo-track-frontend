@@ -1,51 +1,78 @@
 /* eslint-disable no-unused-vars */
-import React from 'react';
-import AboutImg from '../../assets/pictures/img3.jpg';
+import React, { useState, useEffect } from 'react';
+import AboutImg from '../../assets/pictures/system/home1.jpeg';
+import image2 from '../../assets/pictures/system/image2.png';
+import image3 from '../../assets/pictures/system/image3.jpg';
+import image4 from '../../assets/pictures/system/image4.jpg';
+import image5 from '../../assets/pictures/system/image5.png';
+import image6 from '../../assets/pictures/system/image6.jpg';
 
 function About() {
-    return (
-        <section id="about" className="py-10 bg-slate-100 dark:bg-slate-900 dark:text-white">
-            <h2
-                data-aos="fade-up"
-                className="text-center text-4xl font-bold mb-10"
-            >
-                About Us
-            </h2>
-            <main className="container mx-auto flex flex-col items-center justify-center">
+  // Array of images
+  const images = [image5];
 
-                <section className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center p-4 md:p-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
-                    <div data-aos="fade-right">
-                        <img
-                            src={AboutImg}
-                            alt="No image"
-                            className="w-full h-80 object-cover rounded-lg"
-                        />
-                    </div>
-                    <div data-aos="fade-left" className="flex flex-col gap-4">
-                        <div className="p-4 border-l-4 border-primary">
-                            <h3 className="text-2xl font-semibold mb-2">Us</h3>
-                            <p className="text-sm dark:text-slate-400">
-                            A professional transport company operating in major cities in Rwanda & East Africa. 
-                            Provide a more comfortable and we drive our customers to their destination on time.
-                            </p>
-                        </div>
-                        <div className="p-4 border-l-4 border-primary">
-                            <h3 className="text-2xl font-semibold mb-2">Vision</h3>
-                            <p className="text-sm dark:text-slate-400">
-                            Our vision is to become the leading regional transport provider in East Africa, expanding services to more countries, or being recognized for innovation in passenger transport and logistics.
-                            </p>
-                        </div>
-                        <div className="p-4 border-l-4 border-primary">
-                            <h3 className="text-2xl font-semibold mb-2">Mission</h3>
-                            <p className="text-sm dark:text-slate-400">
-                            Our mission is to focus on providing affordable, reliable transportation services in East Africa, ensuring customer satisfaction through efficient and timely travel.
-                            </p>
-                        </div>
-                    </div>
-                </section>
-            </main>
+  // State to keep track of the current image index
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // useEffect hook to change the image every 3 seconds
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
+    }, 3000); // 3000 ms = 3 seconds
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(intervalId);
+  }, []);
+
+  return (
+    <section id="about" className="py-10 bg-slate-100 dark:text-white">
+      <div className="bg-gray-300 mt-2 py-2">
+        <h2
+          data-aos="fade-up"
+          className="text-center text-4xl font-bold mb-10 text-black dark:text-black py-2"
+        >
+          About Us
+        </h2>
+      </div>
+
+      <main className="container mx-auto flex flex-col items-center justify-center">
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center p-4 md:p-8 bg-white rounded-lg shadow-lg">
+          <div data-aos="fade-right">
+            <img
+              src={images[currentImageIndex]} // Display image based on the current index
+              alt="Geospatial Analysis"
+              className="w-full h-80 object-cover rounded-lg"
+            />
+          </div>
+          <div data-aos="fade-left" className="flex flex-col gap-4">
+            <div className="p-4 border-l-4 border-gray-700">
+              <h3 className="text-2xl font-semibold mb-2 text-black">Who We Are</h3>
+              <p className="text-sm dark:text-slate-800">
+                HealthGeoTrack is a cutting-edge platform dedicated to improving healthcare outcomes 
+                through advanced geospatial analysis. We provide real-time insights to optimize resource allocation, 
+                monitor disease outbreaks, and improve healthcare access.
+              </p>
+            </div>
+            <div className="p-4 border-l-4 border-gray-700">
+              <h3 className="text-2xl font-semibold mb-2 text-black">Vision</h3>
+              <p className="text-sm dark:text-slate-800">
+                Our vision is to revolutionize healthcare planning and resource management through 
+                geospatial intelligence, ensuring equitable healthcare delivery for populations across diverse geographic regions.
+              </p>
+            </div>
+            <div className="p-4 border-l-4 border-gray-700">
+              <h3 className="text-2xl font-semibold mb-2 text-black">Mission</h3>
+              <p className="text-sm dark:text-slate-800">
+                We are committed to delivering innovative geospatial analytics solutions that enable 
+                healthcare organizations to make data-driven decisions, enhancing public health outcomes 
+                and fostering a healthier, more connected society.
+              </p>
+            </div>
+          </div>
         </section>
-    );
+      </main>
+    </section>
+  );
 }
 
 export default About;

@@ -44,8 +44,8 @@ const AdminManageResources = () => {
 
   const [allocationData, setAllocationData] = useState({
     health_facility_id: "",
-    description: "",
-    personnel_count: "",
+    equipment: "",
+    specialist: "",
     duration_in_days: "",
   });
 
@@ -61,7 +61,7 @@ const AdminManageResources = () => {
       allocation.health_facility?.name
         ?.toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
-      allocation.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      allocation.equipment?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const totalPages = Math.ceil(filteredAllocations.length / rowsPerPage);
@@ -166,8 +166,8 @@ const AdminManageResources = () => {
         setShowCreateModal(false);
         setAllocationData({
           health_facility_id: "",
-          description: "",
-          personnel_count: "",
+          equipment: "",
+          specialist: "",
           duration_in_days: "",
         });
       } else {
@@ -203,8 +203,8 @@ const AdminManageResources = () => {
         setShowUpdateModal(false);
         setAllocationData({
           health_facility_id: "",
-          description: "",
-          personnel_count: "",
+          equipment: "",
+          specialist: "",
           duration_in_days: "",
         });
         setSelectedAllocation(null);
@@ -220,8 +220,8 @@ const AdminManageResources = () => {
     setSelectedAllocation(allocation);
     setAllocationData({
       health_facility_id: allocation.health_facility.id,
-      description: allocation.description,
-      personnel_count: allocation.personnel_count,
+      equipment: allocation.equipment,
+      specialist: allocation.specialist,
       duration_in_days: allocation.duration_in_days,
     });
     setShowUpdateModal(true);
@@ -236,8 +236,8 @@ const AdminManageResources = () => {
     try {
       const processedData = allocations.map((a) => ({
         "Health Facility": a.health_facility?.name,
-        Description: a.description,
-        "Personnel Count": a.personnel_count,
+        equipment: a.equipment,
+        "Personnel Count": a.specialist,
         "Duration (Days)": a.duration_in_days,
         "Created By": a.created_by?.email,
         "Created At": new Date(a.created_at).toLocaleDateString(),
@@ -325,7 +325,7 @@ const AdminManageResources = () => {
               {data.map((record, index) => (
                 <View key={index} style={styles.row}>
                   <Text>
-                    {record["Health Facility"]} - {record["Description"]}
+                    {record["Health Facility"]} - {record["equipment"]}
                   </Text>
                 </View>
               ))}
@@ -354,7 +354,7 @@ const AdminManageResources = () => {
   // Prepare data for Personnel Count by Facility
   const personnelByFacility = allocations.map(allocation => ({
     name: allocation.health_facility.name,
-    personnelCount: allocation.personnel_count
+    personnelCount: allocation.specialist
   }));
 
   // Prepare data for Duration Distribution
@@ -429,7 +429,7 @@ const AdminManageResources = () => {
           <Search className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Search by facility or description..."
+            placeholder="Search by facility or equipment..."
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
@@ -455,10 +455,10 @@ const AdminManageResources = () => {
                   Health Facility
                 </th>
                 <th className="px-4 py-2 text-left text-sm font-medium text-white">
-                  Description
+                  Special Equipment
                 </th>
                 <th className="px-4 py-2 text-left text-sm font-medium text-white">
-                  Personnel Count
+                  Specialist
                 </th>
                 <th className="px-4 py-2 text-left text-sm font-medium text-white">
                   Duration (Days)
@@ -491,10 +491,10 @@ const AdminManageResources = () => {
                     {allocation.health_facility.name}
                   </td>
                   <td className="px-4 py-2 text-sm text-gray-700">
-                    {allocation.description}
+                    {allocation.equipment}
                   </td>
                   <td className="px-4 py-2 text-sm text-gray-700">
-                    {allocation.personnel_count}
+                    {allocation.specialist}
                   </td>
                   <td className="px-4 py-2 text-sm text-gray-700">
                     {allocation.duration_in_days} days
@@ -643,7 +643,7 @@ const AdminManageResources = () => {
                   onChange={(e) =>
                     setAllocationData({
                       ...allocationData,
-                      health_facility_id: e.target.value,
+                      health_facility_id: e.target.value, 
                     })
                   }
                   className="mt-1 block text-gray-400 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -660,14 +660,14 @@ const AdminManageResources = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Description
+                  Equipment
                 </label>
                 <textarea
-                  value={allocationData.description}
+                  value={allocationData.equipment}
                   onChange={(e) =>
                     setAllocationData({
                       ...allocationData,
-                      description: e.target.value,
+                      equipment: e.target.value,
                     })
                   }
                   className="mt-1 text-gray-400 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -678,16 +678,16 @@ const AdminManageResources = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Personnel Count
+                  Specialist
                 </label>
                 <input
                   type="number"
                   min="0"
-                  value={allocationData.personnel_count}
+                  value={allocationData.specialist}
                   onChange={(e) =>
                     setAllocationData({
                       ...allocationData,
-                      personnel_count: e.target.value,
+                      specialist: e.target.value,
                     })
                   }
                   className="mt-1 text-gray-400 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -723,8 +723,8 @@ const AdminManageResources = () => {
                   setShowUpdateModal(false);
                   setAllocationData({
                     health_facility_id: "",
-                    description: "",
-                    personnel_count: "",
+                    equipment: "",
+                    specialist: "",
                     duration_in_days: "",
                   });
                 }}

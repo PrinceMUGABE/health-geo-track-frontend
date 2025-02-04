@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
@@ -7,8 +6,9 @@ import loginImage from "../../assets/pictures/system/home1.jpeg";
 const ResetPassword = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    phone: '',
+    email: '',
     new_password: '',
+    confirm_password: ''
   });
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -26,9 +26,9 @@ const ResetPassword = () => {
     return csrfToken;
   };
 
-  const validatePhone = (phone) => {
-    const phoneRegex = /^(078|079|072|073)\d{7}$/;
-    return phoneRegex.test(phone) && phone.length === 10;
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   };
 
   const validatePassword = (password) => {
@@ -47,9 +47,9 @@ const ResetPassword = () => {
     setError('');
     setMessage('');
 
-    if (!validatePhone(formData.phone)) {
+    if (!validateEmail(formData.email)) {
       setIsLoading(false);
-      setError('Phone number must be exactly 10 digits and start with 078, 079, 072, or 073.');
+      setError('Please enter a valid email address.');
       return;
     }
 
@@ -59,9 +59,21 @@ const ResetPassword = () => {
       return;
     }
 
+    if (formData.new_password !== formData.confirm_password) {
+      setIsLoading(false);
+      setError('Passwords do not match.');
+      return;
+    }
+
     const csrfToken = getCsrfToken();
     try {
-      const response = await axios.post('http://127.0.0.1:8000/forget_password/', formData, {
+      // Only send email and new_password to backend
+      const submitData = {
+        email: formData.email,
+        new_password: formData.new_password
+      };
+
+      const response = await axios.post('http://127.0.0.1:8000/forget_password/', submitData, {
         headers: {
           'X-CSRFToken': csrfToken,
         },
@@ -81,7 +93,7 @@ const ResetPassword = () => {
       setIsLoading(false);
       if (error.response) {
         if (error.response.status === 404) {
-          setError('Phone number not found.');
+          setError('Email address not found.');
         } else if (error.response.data && error.response.data.error) {
           setError(error.response.data.error);
         } else {
@@ -108,14 +120,14 @@ const ResetPassword = () => {
         backgroundAttachment: 'fixed',
       }}
     >
-      <div className="absolute inset-0 bg-black opacity-50"></div> {/* Dark overlay */}
+      <div className="absolute inset-0 bg-black opacity-50"></div>
       <div className="relative z-10 max-w-sm w-full space-y-8 bg-white rounded-lg shadow-lg p-8 mx-4">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900">
             Reset Password
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Enter your phone number and new password to reset your account.
+            Enter your email and new password to reset your account.
           </p>
         </div>
         {error && <div className="text-red-500 text-sm">{error}</div>}
@@ -123,16 +135,16 @@ const ResetPassword = () => {
         <form className="mt-6 space-y-6" onSubmit={handleSubmit}>
           <div>
             <label
-              htmlFor="phone"
+              htmlFor="email"
               className="block text-sm font-medium text-gray-700"
             >
-              Phone
+              Email
             </label>
             <input
-              id="phone"
-              name="phone"
-              type="text"
-              value={formData.phone}
+              id="email"
+              name="email"
+              type="email"
+              value={formData.email}
               onChange={handleChange}
               className="mt-1 text-gray-700 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               required
@@ -140,16 +152,33 @@ const ResetPassword = () => {
           </div>
           <div>
             <label
-              htmlFor="password"
+              htmlFor="new_password"
               className="block text-sm font-medium text-gray-700"
             >
               New Password
             </label>
             <input
-              id="password"
+              id="new_password"
               name="new_password"
               type="password"
               value={formData.new_password}
+              onChange={handleChange}
+              className="mt-1 block text-gray-700 w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              required
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="confirm_password"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Confirm Password
+            </label>
+            <input
+              id="confirm_password"
+              name="confirm_password"
+              type="password"
+              value={formData.confirm_password}
               onChange={handleChange}
               className="mt-1 block text-gray-700 w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               required

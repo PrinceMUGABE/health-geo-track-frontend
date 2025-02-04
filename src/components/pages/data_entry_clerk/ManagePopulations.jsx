@@ -201,6 +201,16 @@ const Data_Entry_Clerk_ManagePopulations = () => {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
+    
+    const calculatedTotalPopulation = 
+      parseInt(populationData.male_population || 0) + 
+      parseInt(populationData.female_population || 0);
+  
+    const payload = {
+      ...populationData,
+      total_population: calculatedTotalPopulation,
+    };
+  
     try {
       const response = await fetch(
         `http://localhost:8000/population/update/${selectedPopulation.id}/`,
@@ -210,17 +220,15 @@ const Data_Entry_Clerk_ManagePopulations = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-          body: JSON.stringify(populationData),
+          body: JSON.stringify(payload),
         }
       );
-
+  
       if (response.ok) {
-        const updatedPopulation = await response.json();
-        setPopulations(
-          populations.map((pop) =>
-            pop.id === selectedPopulation.id ? updatedPopulation : pop
-          )
-        );
+        // Refresh the data
+        await fetchPopulations();
+        
+        // Reset form and close modal
         setShowUpdateModal(false);
         setPopulationData({
           district: "",

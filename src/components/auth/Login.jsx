@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -12,15 +11,21 @@ import loginImage from "../../assets/pictures/system/home1.jpeg";
 const Login = () => {
   const navigate = useNavigate();
 
-  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const validatePhone = (phone) => {
-    const phoneRegex = /^(078|072|079|073)\d{7}$/;
-    return phoneRegex.test(phone);
+  const validateEmail = (email) => {
+    // Check if email starts with lowercase letter
+    if (!/^[a-z]/.test(email)) {
+      return false;
+    }
+
+    // Regular expression for basic email validation
+    const emailRegex = /^[a-z][a-z0-9._-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
+    return emailRegex.test(email);
   };
 
   const validatePassword = (password) => {
@@ -39,13 +44,13 @@ const Login = () => {
     );
   };
 
-  const handlePhoneChange = (e) => {
-    const newPhone = e.target.value;
-    setPhone(newPhone);
+  const handleEmailChange = (e) => {
+    const newEmail = e.target.value.toLowerCase();
+    setEmail(newEmail);
 
-    if (newPhone && !validatePhone(newPhone)) {
+    if (newEmail && !validateEmail(newEmail)) {
       setError(
-        "Phone number must be 10 digits and start with 078, 072, 079, or 073."
+        "Email must start with a lowercase letter and be in a valid format (e.g., example@domain.com)"
       );
     } else {
       setError("");
@@ -56,9 +61,9 @@ const Login = () => {
     e.preventDefault();
     setError("");
 
-    if (!validatePhone(phone)) {
+    if (!validateEmail(email)) {
       setError(
-        "Phone number must be 10 digits and start with 078, 072, 079, or 073."
+        "Email must start with a lowercase letter and be in a valid format (e.g., example@domain.com)"
       );
       return;
     }
@@ -75,7 +80,7 @@ const Login = () => {
     axios
       .post(
         "http://127.0.0.1:8000/login/",
-        { phone, password },
+        { email, password },
         { headers: { "Content-Type": "application/json" } }
       )
       .then((res) => {
@@ -87,7 +92,6 @@ const Login = () => {
             role: res.data.role,
             email: res.data.email,
             created_at: res.data.created_at,
-            phone: res.data.phone_number,
             refresh_token: res.data.token.refresh,
             access_token: res.data.token.access,
           };
@@ -99,12 +103,9 @@ const Login = () => {
             navigate("/admin");
           } else if (user.role.trim().toLowerCase() === "data_entry_clerk") {
             navigate("/data_entry_clerk");
-
-          }else if (user.role.trim().toLowerCase() === "analyst") {
+          } else if (user.role.trim().toLowerCase() === "analyst") {
             navigate("/data_analyst/data");
-          }
-          
-          else {
+          } else {
             console.log("Unknown user role. Please contact support.");
           }
         } else {
@@ -117,13 +118,12 @@ const Login = () => {
           "Error during login:",
           error.response || error.message || error
         );
-        setError("Invalid phone number or password.");
+        setError("Invalid email or password.");
       });
   };
 
   return (
     <div className="relative flex justify-center items-center min-h-screen bg-gradient-to-r from-blue-500 to-purple-600 px-4 sm:px-6 lg:px-8">
-      {/* Background Image and Overlay */}
       <div
         className="absolute inset-0 bg-cover bg-center opacity-50"
         style={{ backgroundImage: `url(${loginImage})` }}
@@ -142,17 +142,17 @@ const Login = () => {
         <form className="mt-6 space-y-6" onSubmit={handleLogin}>
           <div>
             <label
-              htmlFor="phone"
+              htmlFor="email"
               className="block text-sm font-medium text-gray-700"
             >
-              Phone
+              Email
             </label>
             <input
-              id="phone"
-              name="phone"
-              type="text"
-              value={phone}
-              onChange={handlePhoneChange}
+              id="email"
+              name="email"
+              type="email"
+              value={email}
+              onChange={handleEmailChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-700"
               required
             />
@@ -227,13 +227,6 @@ const Login = () => {
             </button>
           </div>
         </form>
-
-        {/* <div className="mt-3 text-sm text-gray-600">
-          Do not have an account?{" "}
-          <Link to="/signup" className="text-sky-900 hover:text-black">
-            Signup here
-          </Link>
-        </div> */}
 
         <div className="text-start">
           <Link to="/" className="text-sm text-blue-700 hover:text-black">
